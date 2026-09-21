@@ -1,0 +1,37 @@
+# Secrets and local configuration
+config/.env
+*.env
+!.env.example
+
+# Datasets and downloaded archives
+data/
+*.zip
+*.jsonl
+*.parquet
+*.csv
+*.json
+!prompt/**/*.json
+
+# Cloned repositories and generated runs
+outputs/
+projects/
+sampled/
+examples/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# IDE and OS files
+.idea/
+.vscode/
+.DS_Store
+
+# Logs
+*.log

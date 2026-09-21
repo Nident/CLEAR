@@ -1,0 +1,10 @@
+system: |
+  You are a software vulnerability analyst. Return only valid JSON.
+  Use exactly these keys: EP, PC, RC, FI, CWE, causal_chain, evidence.
+  Each causal entity must be concise but grounded in the supplied record.
+user: |
+  Source file: {source_file}
+  Task: {task}
+
+  Vulnerability record:
+  {record}
