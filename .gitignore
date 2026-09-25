@@ -17,6 +17,7 @@ outputs/
 projects/
 sampled/
 examples/
+examples_pretty/
 
 # Python
 __pycache__/
