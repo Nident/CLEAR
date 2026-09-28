@@ -21,7 +21,7 @@ echo "[3/5] Building semantic and causal graph"
 "$PYTHON" knowledge_graph.py --input "$OUT_DIR/file_lvl_knowledge_base.json" --output "$OUT_DIR/file_lvl_knowledge_graph.json" --topk 5
 
 echo "[4/5] Building cross-CVE bridges"
-"$PYTHON" final_knowledge_graph.py --input "$OUT_DIR/file_lvl_knowledge_graph.json" --output "$OUT_DIR/file_lvl_final_knowledge_graph.pre_cwe.json" --llm_config "$CONFIG" --threads 4 --save_every 1
+"$PYTHON" final_knowledge_graph.py --input "$OUT_DIR/file_lvl_knowledge_graph.json" --output "$OUT_DIR/file_lvl_final_knowledge_graph.pre_cwe.json" --llm_config "$CONFIG" --threads 4 --save_every 1 --resume
 
 echo "[5/5] Adding CWE edges"
 "$PYTHON" add_cwe_edges.py --input "$OUT_DIR/file_lvl_final_knowledge_graph.pre_cwe.json" --pre-input "$OUT_DIR/file_lvl_knowledge_graph.json" --output "$OUT_DIR/file_lvl_final_knowledge_graph.json"
