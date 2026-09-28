@@ -1,0 +1,12 @@
+{
+  "models": [
+    {
+      "name": "tgpt/qwen36-35b-a3b-fp8",
+      "provider": "openai",
+      "model": "tgpt/qwen36-35b-a3b-fp8",
+      "temperature": 0.0,
+      "timeout": 30,
+      "max_retries": 0
+    }
+  ]
+}

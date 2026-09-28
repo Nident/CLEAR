@@ -1,38 +1,41 @@
-# Secrets and local configuration
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.DS_Store
+.idea/
+.vscode/
+
+# Local credentials and runtime configuration
+llm_config.json
 config/.env
 *.env
 !.env.example
 
-# Datasets and downloaded archives
+# Other large/local datasets and downloaded archives
 data/
 *.zip
 *.jsonl
 *.parquet
 *.csv
-*.json
-!prompt/**/*.json
 
-# Cloned repositories and generated runs
+# Generated outputs and logs
+knowledge_graph/file-lvl-50/
+knowledge_graph/**/error/
+knowledge_graph/text*.txt
 outputs/
 projects/
 sampled/
 examples/
 examples_pretty/
-
-# Python
-__pycache__/
-*.py[cod]
-.venv/
-venv/
-env/
-*.egg-info/
-.pytest_cache/
-.mypy_cache/
-
-# IDE and OS files
-.idea/
-.vscode/
-.DS_Store
-
-# Logs
 *.log
+
+# Datasets are local; keep only the tiny synthetic test fixture.
+dataset/**
+!dataset/java-pair/
+dataset/java-pair/**
+!dataset/java-pair/java_data_test_minimal_FILE_LVL.json

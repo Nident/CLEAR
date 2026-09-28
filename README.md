@@ -1,32 +1,78 @@
-# CLEAR-style VCKG construction
+# CLEAR
 
-`build_vckg.py` reads either a directory of JSON files or the supplied
-`data/sampled.zip` / `data/examples.zip` archives and writes a GraphML VCKG.
-Runtime parameters are stored in `config/.env` and loaded with `os.getenv()`.
+## Setup
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+conda create -n CLEAR python=3.12 -y
+conda activate CLEAR
 pip install -r requirements.txt
-
-# Fast, fully local baseline
-python3 build_vckg.py
-
-# Embeddings used in CLEAR (downloads all-MiniLM-L6-v2 on first run)
-pip install sentence-transformers
-# Set VCKG_EMBEDDING=minilm in config/.env first, then run:
-python3 build_vckg.py
 ```
 
-The graph contains five node roles per vulnerability instance: `EP`, `PC`,
-`RC`, `FI`, and `CWE`. Local edges form `EP -> PC -> RC -> FI` and connect
-causal nodes to CWE. Neighborhood edges are restricted to the same role and
-CWE cluster, with Top-k filtering (`--top-k 5`). A JSON summary is written next
-to the GraphML file.
 
-The deterministic extractor is intentionally offline and reproducible. It uses
-the available advisory, patch, and before/after fields. For an exact CLEAR
-replication, replace `heuristic()` with an LLM structured-output extractor for
-the five causal entities; the graph integration and export stages remain the
-same.
-# CLEAR
+## Set API key in `llm_config.json`.(Project Root)
+```json
+{
+  "models": [
+    {
+      "provider": "openai",
+      "model": "gpt-4o-mini",
+      "api_key": "<OPENAI_API_KEY>"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "api_key": "<OPENAI_API_KEY>"
+    },
+    {
+      "provider": "google",
+      "model": "gemini-2.5-flash",
+      "api_key": "<GEMINI_API_KEY>"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-5-mini",
+      "api_key": "<OPENAI_API_KEY>"
+    },
+    {
+      "provider": "google",
+      "model": "gemini-3.1-flash-lite",
+      "api_key": "<GEMINI_API_KEY>"
+    }
+  ]
+}
+
+```
+
+## Vulnerability Causal Knowledge Graph
+```bash
+cd knowledge_graph && chmod +x scripts.sh
+./scripts.sh
+```
+
+## Start
+```bash
+python run.py --version primevul --task detection --model gpt-4o-mini
+python run.py --version java-pair --task detection --model gpt-4o-mini
+python run.py --version primevul --task classification --model gpt-4o-mini
+python run.py --version java-pair --task classification --model gpt-4o-mini
+
+# ablation
+python run.py --version primevul --ablation no_evidence --model gpt-4o-mini
+python run.py --version primevul --ablation no_entrypoint --model gpt-4o-mini
+python run.py --version primevul --ablation no_precondition --model gpt-4o-mini
+python run.py --version primevul --ablation no_root_cause --model gpt-4o-mini
+python run.py --version primevul --ablation no_fix_intent --model gpt-4o-mini
+```
+
+## Baseline
+```bash
+chmod +x ./baseline/baseline.sh
+./baseline/baseline.sh
+```
+
+## Evaluation
+
+```bash
+python evaluate.py
+python evaluate.py --table
+```
