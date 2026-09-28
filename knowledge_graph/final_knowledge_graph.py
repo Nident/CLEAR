@@ -330,14 +330,7 @@ def llm_group_type_bridges(
         err_text = str(e).lower()
         if ("invalid" in err_text and "json" in err_text) or "could not parse" in err_text:
             return []
-        with counters_lock:
-            counters["llm_errors"] = counters.get("llm_errors", 0) + 1
-        print(
-            f"[LLM warning] segment={seg.name} src={src_view.id} "
-            f"error={type(e).__name__}: {e}",
-            flush=True,
-        )
-        return []
+        raise
     usage = getattr(resp, "response_metadata", {}) or {}
     usage = usage.get("token_usage", {}) or usage
     with counters_lock:
@@ -578,7 +571,7 @@ def main() -> None:
     edge_lock = Lock()
 
 
-    counters = {"llm_calls": 0, "llm_errors": 0, "worker_errors": 0, "prompt_tokens": 0, "completion_tokens": 0}
+    counters = {"llm_calls": 0, "prompt_tokens": 0, "completion_tokens": 0}
     counters_lock = Lock()
 
     out_obj = {"data": instances} if wrapped else instances
@@ -604,12 +597,7 @@ def main() -> None:
             for inst_idx, inst in enumerate(source_instances)
         ]
         for i, fut in enumerate(tqdm(as_completed(futs), total=n_futs, desc="Cross-CVE bridges")):
-            try:
-                total_added += int(fut.result() or 0)
-            except Exception as e:
-                with counters_lock:
-                    counters["worker_errors"] += 1
-                print(f"[Worker warning] {type(e).__name__}: {e}", flush=True)
+            total_added += int(fut.result() or 0)
             if (i + 1) % save_every == 0 or (i + 1) == n_futs:
                 write_json(out_path, out_obj)
 
@@ -623,8 +611,6 @@ def main() -> None:
     print(f"  source_instances_processed: {len(source_instances)}")
     print(f"  cross_edges_added:          {total_added} (2 edges per accepted link)")
     print(f"  llm_calls:                  {counters['llm_calls']}")
-    print(f"  llm_errors:                 {counters['llm_errors']}")
-    print(f"  worker_errors:              {counters['worker_errors']}")
     print(f"  prompt_tokens:              {counters.get('prompt_tokens', 0)}")
     print(f"  completion_tokens:         {counters.get('completion_tokens', 0)}")
     print(f"  total API call cost ($):     {total_cost:.6f}")
