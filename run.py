@@ -107,6 +107,27 @@ def _resolve_run_message_dirs(
     return None, messages_dir
 
 
+def _completed_indices(messages_dir: str) -> set[int]:
+    """Return indices with a readable final judge result."""
+    completed: set[int] = set()
+    base = Path(messages_dir)
+    if not base.is_dir():
+        return completed
+    for index_dir in base.iterdir():
+        if not index_dir.is_dir() or not index_dir.name.isdigit():
+            continue
+        judge_path = index_dir / "judge" / "1.json"
+        if not judge_path.is_file():
+            continue
+        try:
+            payload = json.loads(judge_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if isinstance(payload, dict) and isinstance(payload.get("judgments"), list):
+            completed.add(int(index_dir.name))
+    return completed
+
+
 def analyze_single_code(
     code: str,
     kg_retriever,
@@ -145,6 +166,14 @@ def main():
     )
     parser.add_argument("--config", type=str, default="./llm_config.json", help="LLM config file path")
     parser.add_argument(
+        "--input", type=Path, default=None,
+        help="Override the test dataset path (must already be in CLEAR format)",
+    )
+    parser.add_argument(
+        "--knowledge-graph", type=Path, default=None,
+        help="Override the final knowledge graph path",
+    )
+    parser.add_argument(
         "--model",
         type=str,
         default=None,
@@ -170,6 +199,11 @@ def main():
         default=None,
         help="Run tag for output suffix (e.g. results2 -> java-pair2). Default: no suffix.",
     )
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Skip indices that already have a valid judge/1.json result",
+    )
     args = parser.parse_args()
     llm_config = load_llm_config(args.config)
     configured_models = list_configured_models(llm_config)
@@ -184,7 +218,16 @@ def main():
     task_mode = args.task
     run_tag = _normalize_run_tag(args.results_base)
 
-    input_path, kg_path = _paths_for_version(args.version, task_mode)
+    if args.input is None or args.knowledge_graph is None:
+        default_input_path, default_kg_path = _paths_for_version(args.version, task_mode)
+    else:
+        default_input_path = default_kg_path = None
+    input_path = args.input.resolve() if args.input is not None else default_input_path
+    kg_path = args.knowledge_graph.resolve() if args.knowledge_graph is not None else default_kg_path
+    if not input_path.is_file():
+        raise FileNotFoundError(f"Input file not found: {input_path}")
+    if not kg_path.is_file():
+        raise FileNotFoundError(f"KG not found: {kg_path}")
 
     base_messages_dir, messages_dir = _resolve_run_message_dirs(
         model_name, args.version, task_mode, args.ablation, run_tag
@@ -200,12 +243,17 @@ def main():
     indexed_records = list(enumerate(records))
     error_dir = Path(messages_dir) / "error"
     error_dir.mkdir(parents=True, exist_ok=True)
+    completed = _completed_indices(messages_dir) if args.resume else set()
+    if args.resume:
+        print(f"[resume] completed indices found: {len(completed)}")
 
     for pos, rec in indexed_records:
         func = rec.get("func", "") if isinstance(rec, dict) else ""
         if not func:
             continue
         idx = to_int_id(rec, pos)
+        if idx in completed:
+            continue
 
         last_error: Optional[Exception] = None
         last_traceback = ""
@@ -247,12 +295,14 @@ def main():
             err_path.write_text(json.dumps(err_payload, ensure_ascii=False, indent=2), encoding="utf-8")
             print(f"[skip] idx={idx} (error saved: {err_path})")
             continue
+        (error_dir / f"{idx}-err.json").unlink(missing_ok=True)
     _run_post_eval(
         task_mode=task_mode,
         version=args.version,
         model=model_name,
         ablation=args.ablation,
         run_tag=run_tag,
+        input_path=input_path,
     )
 
 
@@ -262,6 +312,7 @@ def _run_post_eval(
     model: str,
     ablation: Optional[str] = None,
     run_tag: Optional[str] = None,
+    input_path: Optional[Path] = None,
 ) -> None:
     evaluate_script = Path(__file__).parent / ("eval_classification.py" if task_mode == "classification" else "eval_detection.py")
     cmd = [sys.executable, str(evaluate_script), "--version", version, "--model", model]
@@ -269,6 +320,8 @@ def _run_post_eval(
         cmd.extend(["--ablation", ablation])
     if run_tag:
         cmd.extend(["--results-base", run_tag])
+    if input_path is not None:
+        cmd.extend(["--input", str(input_path)])
     subprocess.run(cmd, check=True)
 
 
