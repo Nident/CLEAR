@@ -3,6 +3,7 @@ venv/
 env/
 results/
 samples/
+reports/
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -20,6 +21,8 @@ config/.env
 
 # Other large/local datasets and downloaded archives
 data/
+dataset/
+java-init-train/
 *.zip
 *.jsonl
 *.parquet

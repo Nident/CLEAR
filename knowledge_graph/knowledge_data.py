@@ -217,7 +217,7 @@ def _validate_required_fields(item: Dict[str, Any], dataset_format: str) -> tupl
         if not _is_valid(item.get("cve_desc")):
             missing.append("cve_desc")
     else:
-        if not _is_valid(item.get("cve_description")):
+        if not _is_valid(item.get("cve_description") or item.get("cve_desc")):
             missing.append("cve_description")
 
     return (len(missing) == 0, missing)
@@ -241,7 +241,7 @@ def llm_extract_subgraph(
     if dataset_format == "primevul":
         cve_desc = item.get("cve_desc")
     else:
-        cve_desc = item.get("cve_description")
+        cve_desc = item.get("cve_description") or item.get("cve_desc")
 
     prompt = USER_PROMPT.format(
         meta_json=json.dumps(meta, ensure_ascii=False),
