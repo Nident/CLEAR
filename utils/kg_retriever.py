@@ -25,6 +25,11 @@ class KGRetriever:
             self.edges = self.kg_data.get("edges", [])
         
         self.node_by_id = {node["id"]: node for node in self.nodes}
+        self.out_edges_by_src = {}
+        for edge in self.edges:
+            src = edge.get("src")
+            if src:
+                self.out_edges_by_src.setdefault(src, []).append(edge)
         self.nodes_by_type = {}
         for node in self.nodes:
             node_type = node.get("type")
@@ -61,7 +66,7 @@ class KGRetriever:
         return self.node_by_id.get(node_id)
 
     def get_out_edges(self, node_id: str) -> List[Dict[str, Any]]:
-        return [e for e in self.edges if e.get("src") == node_id]
+        return self.out_edges_by_src.get(node_id, [])
 
     def get_related_nodes(self, node_id: str, relation_type: Optional[str] = None) -> List[Dict[str, Any]]:
         related_node_ids = set()

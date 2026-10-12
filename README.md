@@ -49,6 +49,35 @@ cd knowledge_graph && chmod +x scripts.sh
 ./scripts.sh
 ```
 
+## VCKG MCP server
+
+The read-only MCP adapter exposes the existing `KGRetriever` to an external
+agent. It loads the graph once and provides bounded semantic retrieval and
+causal traversal tools; it does not call an LLM itself.
+
+```bash
+./vckg_mcp_ctl.sh start
+./vckg_mcp_ctl.sh status
+./vckg_mcp_ctl.sh logs
+./vckg_mcp_ctl.sh stop
+```
+
+Defaults:
+
+- MCP endpoint: `http://127.0.0.1:4250/mcp`
+- health endpoint: `http://127.0.0.1:4250/health`
+- graph: `knowledge_graph/project-lvl-train/project_lvl_final_knowledge_graph.json`
+
+Select another graph before starting the server:
+
+```bash
+export VCKG_PATH="$PWD/knowledge_graph/file-lvl-train/file_lvl_final_knowledge_graph.json"
+./vckg_mcp_ctl.sh restart
+```
+
+Exposed tools: `vckg_seed_retrieve`, `vckg_get_bridges`,
+`vckg_expand_nodes`, and `vckg_get_node`.
+
 ## Start
 ```bash
 python run.py --version primevul --task detection --model gpt-4o-mini

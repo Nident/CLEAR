@@ -44,3 +44,7 @@ dataset/**
 !dataset/java-pair/
 dataset/java-pair/**
 !dataset/java-pair/java_data_test_minimal_FILE_LVL.json
+
+
+
+tests/
